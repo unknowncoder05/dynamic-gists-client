@@ -1,9 +1,9 @@
 import { BlockTypes } from '../enums/BlockTypes'
-import { CodeBlock } from '../../../../models/code'
+import { PythonCodeBlock } from './../../models/codeBlock'
 
 
 export interface ifModel{
     type:BlockTypes.if,
     condition:string
-    code:CodeBlock[]
+    code:PythonCodeBlock[]
 }

@@ -1,4 +1,4 @@
-import { Blockhandler } from '../models/Blockhandler'
+import { Blockhandler } from '../models/blockhandler'
 import { FunctionCallModel } from '../models/functionCall'
 import { CodeLine } from '../../../../models/code'
 

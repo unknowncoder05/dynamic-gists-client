@@ -1,4 +1,4 @@
-import { Blockhandler } from '../models/Blockhandler'
+import { Blockhandler } from '../models/blockhandler'
 import { ifModel } from '../models/if'
 import { CodeLine } from '../../../../models/code'
 

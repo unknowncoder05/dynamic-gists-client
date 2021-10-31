@@ -1,6 +1,6 @@
 export interface CodeLine {
-    content:string,
-    indent?:number
+    content: string,
+    indent?: number
 }
 
 export interface CodeBlock {

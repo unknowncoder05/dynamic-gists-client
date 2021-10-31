@@ -2,7 +2,7 @@ import { ifBlock } from './renderers/if'
 import { functionBlock } from './renderers/function'
 import { functionCallBlock } from './renderers/functionCall'
 import { CodeLine } from '../../../models/code'
-import { Blockhandler } from './models/Blockhandler'
+import { Blockhandler } from './models/blockhandler'
 
 
 interface Renderer{
