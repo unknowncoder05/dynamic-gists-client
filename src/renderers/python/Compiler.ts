@@ -10,14 +10,14 @@ export default class Compiler{
     }
     
     codeLinesCompile(): CodeLine[] | undefined{
-        return this.blockHandler(this.originalBlock, this.originalArgs)
+        return blockHandler(this.originalBlock)
     }
+}
 
-    blockHandler(block:CodeBlock, args:any): CodeLine[] | undefined{
-        if (renderers.hasOwnProperty(block.type)){
-            return renderers[block.type](block, this)
-        } else {
-            console.error(`'${block.type}' is not a valid block type`)
-        }
+function blockHandler(block:CodeBlock, indent:number=0): CodeLine[] | undefined{
+    if (renderers.hasOwnProperty(block.type)){
+        return renderers[block.type](block, blockHandler, indent)
+    } else {
+        console.error(`'${block.type}' is not a valid block type`)
     }
 }
