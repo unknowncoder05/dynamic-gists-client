@@ -1,0 +1,15 @@
+{
+    "renderInputs":{
+        "messageSubject":{"type":"str", "default":"World"},
+        "message":{"type":"str", "default":"Hello ##messageSubject##!"}
+    },
+    "type":"function",
+    "name":"hello_world",
+    "code":[
+        {
+            "type":"functionCall",
+            "function":"print",
+            "args":["##message##"]
+        }
+    ]
+}
