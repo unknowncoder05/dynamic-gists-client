@@ -1,0 +1,33 @@
+{
+    "requires":[
+        {
+            "from": "builtin/examples/helloWorld",
+            "import": "*",
+            "as":"hello_world"
+        }
+    ],
+    "imports":[
+        {
+            "from":"",
+            "import":"",
+            "as":""
+        }
+    ],
+    "type":"code",
+    "code":[
+        {
+            "type":"load",
+            "from":"##hello_world##"
+        },
+        {
+            "type":"if",
+            "condition":"__name__ == '__main__'",
+            "code":[
+                {
+                    "type":"functionCall",
+                    "function":"##hello_world.renderInputs.functionName##"
+                }
+            ]
+        }
+    ]
+}
