@@ -6,6 +6,7 @@ export default class Compiler{
     originalBlock:PythonCodeBlock | undefined
     renderedBlock:PythonCodeBlock | undefined
     originalArgs:any
+
     constructor(block:PythonCodeBlock, args:any){
         this.originalBlock = block
         this.originalArgs = args
@@ -14,7 +15,23 @@ export default class Compiler{
     }
     
     codeLinesCompile(): CodeLine[] | undefined{
-        return blockHandler(this.renderedBlock)
+        let codeLines = blockHandler(this.renderedBlock)
+        return codeLines
+    }
+
+    compile(tab:string='    '): string{
+        let codeLines = this.codeLinesCompile()
+        let resultLines = []
+        if(!codeLines) return ''
+        for(const line of codeLines){
+            let indentationString = ''
+            if (line.indent != undefined && line.indent > 0){
+                indentationString = Array(line.indent+1).join(tab)
+            }
+            resultLines.push(`${indentationString}${line.content}`)
+        }
+        let result = resultLines.join('\n')
+        return result
     }
 }
 

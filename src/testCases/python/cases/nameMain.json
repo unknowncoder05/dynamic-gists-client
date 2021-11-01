@@ -6,13 +6,6 @@
             "as":"hello_world"
         }
     ],
-    "imports":[
-        {
-            "from":"",
-            "import":"",
-            "as":""
-        }
-    ],
     "type":"code",
     "code":[
         {
