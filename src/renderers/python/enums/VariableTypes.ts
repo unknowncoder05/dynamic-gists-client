@@ -5,6 +5,7 @@ export enum VariableTypes{
     number = "float",
     list = "list",
     array = "list",
+    object = "object"
 }
 
 export type VariableType = (

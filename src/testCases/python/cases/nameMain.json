@@ -1,17 +1,14 @@
 {
     "requires":[
         {
-            "from": "builtin/examples/helloWorld",
+            "from": "./helloWorld.json",
             "import": "*",
             "as":"hello_world"
         }
     ],
     "type":"code",
     "code":[
-        {
-            "type":"load",
-            "from":"##hello_world##"
-        },
+        "##:hello_world##",
         {
             "type":"if",
             "condition":"__name__ == '__main__'",

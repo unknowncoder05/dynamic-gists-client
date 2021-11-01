@@ -1,17 +1,25 @@
 import { renderers } from './blocks/renderers'
 import { CodeLine } from './../../models/code'
 import { PythonCodeBlock } from './models/codeBlock'
+import { VariableTypes } from './enums/VariableTypes'
+import path from 'path'
+
+const loadBlockRegex = /^:/
+const loadBlockRegexRemove = /^:/
+const renderInputRegex = /##(.*?)##/g
+const renderInputRegexRemove = /##/g
 
 export default class Compiler{
     originalBlock:PythonCodeBlock | undefined
     renderedBlock:PythonCodeBlock | undefined
     originalArgs:any
+    baseRoute:string
 
-    constructor(block:PythonCodeBlock, args:any){
+    constructor(block:PythonCodeBlock, args:any, baseRoute:string, blockRoute:string='base'){
         this.originalBlock = block
         this.originalArgs = args
-
-        this.renderedBlock = renderBlockInputs(block, args)
+        this.baseRoute = baseRoute
+        this.renderedBlock = renderBlockInputs(block, args, baseRoute, blockRoute)
     }
     
     codeLinesCompile(): CodeLine[] | undefined{
@@ -44,44 +52,45 @@ function blockHandler(block:PythonCodeBlock | undefined, indent:number=0): CodeL
     }
 }
 
-function renderBlockInputs(block: PythonCodeBlock, args:any): PythonCodeBlock | undefined{
-    let inputs = getInputsFromBlock(block, args)
-    for(const inputName in inputs){
-        let matches = inputs[inputName].match(/##(.*?)##/g)
-        if(matches){
-            for(const match of matches){
-                let value = inputs[match.replace(/##/g,'')]
-                var replace = match;
-                var re = new RegExp(replace,"g");
-                inputs[inputName] = inputs[inputName].replace(re, value)
-            }
-        }
-    }
-    let result = replaceStringsInObject(block, inputs)
+function renderBlockInputs(block: PythonCodeBlock, args:any, baseRoute:string, blockRoute:string): PythonCodeBlock | undefined{
+    let loadedRequiredBlocks = getRequiredInputsFromBlock(block, args, baseRoute, blockRoute)
+    let renderedBlock = block
+    let inputs = getInputsFromBlock(renderedBlock, args, blockRoute)
+    inputs = Object.assign(inputs, loadedRequiredBlocks.inputs)
+    inputs = replaceStringsInObject(inputs, inputs, args, blockRoute)
+    let result = replaceStringsInObject(renderedBlock, inputs, renderedBlock.renderInputs, blockRoute)
+    
     return result
 }
 
-function replaceStringsInObject(block:any, args:any): any{
+function replaceStringsInObject(block:any, args:any, argsDefinition:any, blockRoute:string): any{
     if(Array.isArray(block)){
         let result = []
         for(const blockItem of block){
-            result.push(replaceStringsInObject(blockItem, args))
+            result.push(replaceStringsInObject(blockItem, args, argsDefinition, blockRoute))
         }
         return result
     }
     if(typeof block === 'object'){
         let result:any = {}
         for(const blockPropperty in block){
-            result[blockPropperty] = replaceStringsInObject(block[blockPropperty], args)
+            result[blockPropperty] = replaceStringsInObject(block[blockPropperty], args, argsDefinition, blockRoute)
         }
         return result
     }
     if(typeof block === 'string'){
-        let matches = block.match(/##(.*?)##/g)
+        let matches = block.match(renderInputRegex)
         let result = block
         if(matches){
+            if(matches.length == 1 && matches[0] == block){
+                let rawInputValue = matches[0].replace(renderInputRegexRemove,'')
+                if (loadBlockRegex.test(rawInputValue)){
+                    let value = args[rawInputValue.replace(loadBlockRegexRemove, '')]
+                    return value
+                }
+            }
             for(const match of matches){
-                let value = args[match.replace(/##/g,'')]
+                let value = args[match.replace(renderInputRegexRemove,'')]
                 var replace = match;
                 var re = new RegExp(replace,"g");
                 result = result.replace(re, value)
@@ -94,9 +103,9 @@ function replaceStringsInObject(block:any, args:any): any{
     
 }
 
-function getInputsFromBlock(block: PythonCodeBlock, args:any): any{
-    let inputs:any = {}
-    for(const renderInput in block.renderInputs){
+function getInputsFromBlock(block: PythonCodeBlock, args:any, blockRoute:string): any{
+    let inputs:{[key:string]:any} = {}
+    for(const renderInput in block.renderInputs){        
         if(args.hasOwnProperty(renderInput)){
             inputs[renderInput] = args[renderInput]
             // TODO: check input type
@@ -110,4 +119,27 @@ function getInputsFromBlock(block: PythonCodeBlock, args:any): any{
         }
     }
     return inputs
+}
+
+function getRequiredInputsFromBlock(block: PythonCodeBlock, args:any, baseRoute:string, blockRoute:string): any{
+    if(!block.requires) return {
+        inputs:[]
+    }
+    let inputs:{[key:string]:any} = {}
+    for(const requirement of block.requires){
+        const importPathDir = path.join(process.cwd(), baseRoute)
+        const importPathFile = path.join(importPathDir, requirement.from)
+        const importCodeBlock:PythonCodeBlock = require(importPathFile)
+        let requirementName = ''
+        if(requirement.as){
+            requirementName = requirement.as
+        } else {
+            requirementName = path.basename(requirement.from).split('.')[0]
+        }
+        const importBlock = new Compiler(importCodeBlock, args, baseRoute, `${blockRoute ? blockRoute+'.' : blockRoute}${requirementName}`)
+        inputs[requirementName] = importBlock.renderedBlock//codeLinesCompile()
+    }
+    return {
+        inputs
+    }
 }

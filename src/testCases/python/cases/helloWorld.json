@@ -10,7 +10,7 @@
         {
             "type":"functionCall",
             "function":"print",
-            "args":["##message##"]
+            "args":["'##message##'"]
         }
     ]
 }
