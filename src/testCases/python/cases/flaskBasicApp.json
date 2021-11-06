@@ -7,8 +7,8 @@
     "type":"code",
     "imports":[
         {
-            "from": "Flask",
-            "import": "flask"
+            "from": "flask",
+            "import": "Flask"
         }
     ],
     "code":[

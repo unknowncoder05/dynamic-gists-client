@@ -1,12 +1,15 @@
 import { CodeBlock } from './../../../models/code'
 import { Argument } from './argument'
+import { Import } from './import'
 
 interface RequiredField{
     from:string,
     import:string,
     as:string
 }
-export interface PythonCodeBlock extends CodeBlock {
+
+export interface PythonBaseCodeBlock extends CodeBlock{
     renderInputs?: {[key:string]:Argument}
-    requires?: RequiredField[]
+    requires?: RequiredField[],
+    imports?: Import[]
 }

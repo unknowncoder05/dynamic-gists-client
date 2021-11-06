@@ -1,8 +1,9 @@
 import { renderers } from './blocks/renderers'
+import { ImportBlockRenderer } from './blocks/renderers/import'
 import { CodeLine } from './../../models/code'
-import { PythonCodeBlock } from './models/codeBlock'
+import { PythonBaseCodeBlock } from './models/codeBlock'
 import { Import } from './models/import'
-import { VariableTypes } from './enums/VariableTypes'
+import { BlockTypes } from './blocks/enums/BlockTypes'
 import path from 'path'
 
 const loadBlockRegex = /^:/
@@ -11,25 +12,32 @@ const renderInputRegex = /##(.*?)##/g
 const renderInputRegexRemove = /##/g
 
 export default class Compiler{
-    originalBlock:PythonCodeBlock | undefined
-    renderedBlock:PythonCodeBlock | undefined
+    originalBlock:PythonBaseCodeBlock | undefined
+    renderedBlock:PythonBaseCodeBlock | undefined
     originalArgs:any
     inputs:any
     imports:Import[]
     baseRoute:string
 
-    constructor(block:PythonCodeBlock, args:any, baseRoute:string, blockRoute:string='base'){
+    constructor(block:PythonBaseCodeBlock, args:any, baseRoute:string, blockRoute:string='base'){
         this.originalBlock = block
         this.originalArgs = args
         this.baseRoute = baseRoute
         let inputRenderingResult = renderBlockInputs(block, args, baseRoute, blockRoute)
         this.renderedBlock = inputRenderingResult.result
         this.inputs = inputRenderingResult.inputs
-        this.imports = []
+        let imports = getImports(this.renderedBlock)
+        this.imports = imports ? imports : [] 
     }
     
     codeLinesCompile(): CodeLine[] | undefined{
-        let codeLines = blockHandler(this.renderedBlock)
+        let codeLines:CodeLine[] = []
+        let importCodeLines = ImportBlockRenderer(this.imports)
+        if(importCodeLines)
+            codeLines = [ ...codeLines, ...importCodeLines]
+        let mainCodeLines = blockHandler(this.renderedBlock)
+        if(mainCodeLines)
+            codeLines = [ ...codeLines, ...mainCodeLines]
         return codeLines
     }
 
@@ -50,7 +58,29 @@ export default class Compiler{
     }
 }
 
-function blockHandler(block:PythonCodeBlock | undefined, indent:number=0): CodeLine[] | undefined{
+function getImports(block:PythonBaseCodeBlock | PythonBaseCodeBlock[] | undefined): Import[] | undefined{
+    if(Array.isArray(block)){
+        let result:Import[] = []
+        for(const blockItem of block){
+            let newImports = getImports(blockItem)
+            if(newImports)
+                result = [ ...result, ...newImports]
+        }
+        return result
+    }
+    if(typeof block === 'object'){
+        let result:Import[] = block.imports ? block.imports : []
+        
+        if(block.code){
+            let newImports = getImports(block.code)
+            if(newImports)
+                result = [ ...result, ...newImports]
+        }
+        return result
+    }
+}
+
+function blockHandler(block:PythonBaseCodeBlock | undefined, indent:number=0): CodeLine[] | undefined{
     if (!block) return
     if (renderers.hasOwnProperty(block.type)){
         return renderers[block.type](block, blockHandler, indent)
@@ -59,7 +89,7 @@ function blockHandler(block:PythonCodeBlock | undefined, indent:number=0): CodeL
     }
 }
 
-function renderBlockInputs(block: PythonCodeBlock, args:any, baseRoute:string, blockRoute:string): {result:PythonCodeBlock | undefined, inputs:any}{
+function renderBlockInputs(block: PythonBaseCodeBlock, args:any, baseRoute:string, blockRoute:string): {result:PythonBaseCodeBlock | undefined, inputs:any}{
     let loadedRequiredBlocks = getRequiredInputsFromBlock(block, args, baseRoute, blockRoute)
     let renderedBlock = block
     let inputs = getInputsFromBlock(renderedBlock, args, blockRoute)
@@ -114,6 +144,7 @@ function replaceStringsInObject(block:any, args:any, argsDefinition:any, blockRo
     return block
     
 }
+
 function getInputAttribute(rawInputName:string, args:any, blockRoute:string): any{
     let value = args
     if(/\./.test(rawInputName)){
@@ -131,7 +162,7 @@ function getInputAttribute(rawInputName:string, args:any, blockRoute:string): an
     return value
 }
 
-function getInputsFromBlock(block: PythonCodeBlock, args:any, blockRoute:string): any{
+function getInputsFromBlock(block: PythonBaseCodeBlock, args:any, blockRoute:string): any{
     let inputs:{[key:string]:any} = {}
     for(const renderInput in block.renderInputs){        
         if(args.hasOwnProperty(renderInput)){
@@ -149,7 +180,7 @@ function getInputsFromBlock(block: PythonCodeBlock, args:any, blockRoute:string)
     return inputs
 }
 
-function getRequiredInputsFromBlock(block: PythonCodeBlock, args:any, baseRoute:string, blockRoute:string): any{
+function getRequiredInputsFromBlock(block: PythonBaseCodeBlock, args:any, baseRoute:string, blockRoute:string): any{
     if(!block.requires) return {
         inputs:[]
     }
@@ -157,7 +188,7 @@ function getRequiredInputsFromBlock(block: PythonCodeBlock, args:any, baseRoute:
     for(const requirement of block.requires){
         const importPathDir = path.join(process.cwd(), baseRoute)
         const importPathFile = path.join(importPathDir, requirement.from)
-        const importCodeBlock:PythonCodeBlock = require(importPathFile)
+        const importCodeBlock:PythonBaseCodeBlock = require(importPathFile)
         let requirementName = ''
         if(requirement.as){
             requirementName = requirement.as

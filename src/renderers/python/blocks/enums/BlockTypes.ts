@@ -6,4 +6,6 @@ export enum BlockTypes{
     classCall = "classCall",
     variable = "variable",
     return = "return",
+    import = "import",
+    code = "code"
 }
