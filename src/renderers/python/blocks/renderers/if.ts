@@ -3,7 +3,7 @@ import { ifModel } from '../models/if'
 import { codeBlockRenderer } from './code'
 import { CodeLine } from '../../../../models/code'
 
-export function ifBlock(block:ifModel, blockHandler:Blockhandler, indent:number=0): (CodeLine)[] {
+export function ifBlockRenderer(block:ifModel, blockHandler:Blockhandler, indent:number=0): (CodeLine)[] {
     let result:CodeLine[] = []
     let conditionLine:CodeLine = {
         content: `if ${block.condition}:`,

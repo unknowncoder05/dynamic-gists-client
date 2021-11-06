@@ -3,5 +3,7 @@ export enum BlockTypes{
     function = "function",
     functionCall = "functionCall",
     class = "class",
-    classCall = "classCall"
+    classCall = "classCall",
+    variable = "variable",
+    return = "return",
 }

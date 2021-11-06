@@ -15,7 +15,7 @@
         {
             "type":"variable",
             "name":"app",
-            "value":"Flask(__name__)"
+            "expression":"Flask(__name__)"
         },
         {
             "type":"function",

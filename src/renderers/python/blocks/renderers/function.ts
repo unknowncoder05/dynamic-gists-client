@@ -5,7 +5,8 @@ import { CodeLine } from '../../../../models/code'
 
 export function functionBlockRenderer(block:FunctionModel, blockHandler:Blockhandler, indent:number=0): (CodeLine)[] {
     let result:CodeLine[] = []
-    let argsFragment = ''
+    let argsFragment = block.args?.map(x => `${x.name}${x.type ? ':'+x.type:''}${x.default ? '=' + x.default:''}`).join(', ')
+    
     let declarationLine:CodeLine = {
         content: `def ${block.name}(${argsFragment}):`,
         indent
