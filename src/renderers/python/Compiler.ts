@@ -1,6 +1,7 @@
 import { renderers } from './blocks/renderers'
 import { CodeLine } from './../../models/code'
 import { PythonCodeBlock } from './models/codeBlock'
+import { Import } from './models/import'
 import { VariableTypes } from './enums/VariableTypes'
 import path from 'path'
 
@@ -13,13 +14,18 @@ export default class Compiler{
     originalBlock:PythonCodeBlock | undefined
     renderedBlock:PythonCodeBlock | undefined
     originalArgs:any
+    inputs:any
+    imports:Import[]
     baseRoute:string
 
     constructor(block:PythonCodeBlock, args:any, baseRoute:string, blockRoute:string='base'){
         this.originalBlock = block
         this.originalArgs = args
         this.baseRoute = baseRoute
-        this.renderedBlock = renderBlockInputs(block, args, baseRoute, blockRoute)
+        let inputRenderingResult = renderBlockInputs(block, args, baseRoute, blockRoute)
+        this.renderedBlock = inputRenderingResult.result
+        this.inputs = inputRenderingResult.inputs
+        this.imports = []
     }
     
     codeLinesCompile(): CodeLine[] | undefined{
@@ -31,6 +37,7 @@ export default class Compiler{
         let codeLines = this.codeLinesCompile()
         let resultLines = []
         if(!codeLines) return ''
+        
         for(const line of codeLines){
             let indentationString = ''
             if (line.indent != undefined && line.indent > 0){
@@ -52,15 +59,18 @@ function blockHandler(block:PythonCodeBlock | undefined, indent:number=0): CodeL
     }
 }
 
-function renderBlockInputs(block: PythonCodeBlock, args:any, baseRoute:string, blockRoute:string): PythonCodeBlock | undefined{
+function renderBlockInputs(block: PythonCodeBlock, args:any, baseRoute:string, blockRoute:string): {result:PythonCodeBlock | undefined, inputs:any}{
     let loadedRequiredBlocks = getRequiredInputsFromBlock(block, args, baseRoute, blockRoute)
     let renderedBlock = block
     let inputs = getInputsFromBlock(renderedBlock, args, blockRoute)
     inputs = Object.assign(inputs, loadedRequiredBlocks.inputs)
-    inputs = replaceStringsInObject(inputs, inputs, args, blockRoute)
+    inputs = replaceStringsInObject(inputs, inputs, renderedBlock.renderInputs, blockRoute)
     let result = replaceStringsInObject(renderedBlock, inputs, renderedBlock.renderInputs, blockRoute)
     
-    return result
+    return {
+        result,
+        inputs
+    }
 }
 
 function replaceStringsInObject(block:any, args:any, argsDefinition:any, blockRoute:string): any{
@@ -83,14 +93,16 @@ function replaceStringsInObject(block:any, args:any, argsDefinition:any, blockRo
         let result = block
         if(matches){
             if(matches.length == 1 && matches[0] == block){
-                let rawInputValue = matches[0].replace(renderInputRegexRemove,'')
-                if (loadBlockRegex.test(rawInputValue)){
-                    let value = args[rawInputValue.replace(loadBlockRegexRemove, '')]
+                let rawLoadInputValue = matches[0].replace(renderInputRegexRemove,'')
+                if (loadBlockRegex.test(rawLoadInputValue)){
+                    let rawInputValue = rawLoadInputValue.replace(loadBlockRegexRemove, '')
+                    let value = getInputAttribute(rawInputValue, args, blockRoute)
                     return value
                 }
             }
             for(const match of matches){
-                let value = args[match.replace(renderInputRegexRemove,'')]
+                let rawInputName = match.replace(renderInputRegexRemove,'')
+                let value = getInputAttribute(rawInputName, args, blockRoute)
                 var replace = match;
                 var re = new RegExp(replace,"g");
                 result = result.replace(re, value)
@@ -101,6 +113,22 @@ function replaceStringsInObject(block:any, args:any, argsDefinition:any, blockRo
     }
     return block
     
+}
+function getInputAttribute(rawInputName:string, args:any, blockRoute:string): any{
+    let value = args
+    if(/\./.test(rawInputName)){
+        for(const part of rawInputName.split('.')){
+            if(!value.hasOwnProperty(part)){
+                value = undefined
+                console.error(`${blockRoute} attribute ${rawInputName} is not defined`);
+                break
+            }
+            value = value[part]
+        }
+    } else {
+        value = value[rawInputName]
+    }
+    return value
 }
 
 function getInputsFromBlock(block: PythonCodeBlock, args:any, blockRoute:string): any{
@@ -138,6 +166,7 @@ function getRequiredInputsFromBlock(block: PythonCodeBlock, args:any, baseRoute:
         }
         const importBlock = new Compiler(importCodeBlock, args, baseRoute, `${blockRoute ? blockRoute+'.' : blockRoute}${requirementName}`)
         inputs[requirementName] = importBlock.renderedBlock//codeLinesCompile()
+        inputs = Object.assign(inputs, importBlock.inputs)
     }
     return {
         inputs

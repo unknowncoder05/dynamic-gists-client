@@ -1,9 +1,9 @@
 import { Blockhandler } from '../models/blockhandler'
 import { FunctionModel } from '../models/function'
-import { codeBlockBlock } from './code'
+import { codeBlockRenderer } from './code'
 import { CodeLine } from '../../../../models/code'
 
-export function functionBlock(block:FunctionModel, blockHandler:Blockhandler, indent:number=0): (CodeLine)[] {
+export function functionBlockRenderer(block:FunctionModel, blockHandler:Blockhandler, indent:number=0): (CodeLine)[] {
     let result:CodeLine[] = []
     let argsFragment = ''
     let declarationLine:CodeLine = {
@@ -11,6 +11,6 @@ export function functionBlock(block:FunctionModel, blockHandler:Blockhandler, in
         indent
     }
     result.push(declarationLine)
-    result = [...result, ...codeBlockBlock(block, blockHandler, indent)]
+    result = [...result, ...codeBlockRenderer(block, blockHandler, indent)]
     return result
 }

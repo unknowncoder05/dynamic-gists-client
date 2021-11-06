@@ -1,5 +1,7 @@
 export enum BlockTypes{
     if = "if",
     function = "function",
-    functionCall = "functionCall"
+    functionCall = "functionCall",
+    class = "class",
+    classCall = "classCall"
 }

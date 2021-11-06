@@ -11,6 +11,9 @@
         {"type":"float", "name":"##variable_number_a##"},
         {"type":"float", "name":"##variable_number_b##"}
     ],
+    "returnTypes":[
+        "str"
+    ],
     "code":[
         {
             "type":"variable",
@@ -20,7 +23,7 @@
         },
         {
             "type":"return",
-            "expression":"##variable_result##"
+            "expressions": ["##variable_result##"]
         }
     ]
 }

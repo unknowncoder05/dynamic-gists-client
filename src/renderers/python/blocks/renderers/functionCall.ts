@@ -2,7 +2,7 @@ import { Blockhandler } from '../models/blockhandler'
 import { FunctionCallModel } from '../models/functionCall'
 import { CodeLine } from '../../../../models/code'
 
-export function functionCallBlock(block:FunctionCallModel, _:Blockhandler, indent:number=0): (CodeLine)[] {
+export function functionCallBlockRenderer(block:FunctionCallModel, _:Blockhandler, indent:number=0): (CodeLine)[] {
     let result:CodeLine[] = []
     let argsFragment = ''
     if(block.args != undefined){

@@ -15,8 +15,13 @@
             "code":[
                 {
                     "type":"functionCall",
-                    "function":"##hello_world.renderInputs.functionName##"
-                }
+                    "function":"##functionName##"
+                },
+                {
+                    "type":"functionCall",
+                    "function":"##hello_world.name##"
+                },
+                "##:hello_world.code.0##"
             ]
         }
     ]
