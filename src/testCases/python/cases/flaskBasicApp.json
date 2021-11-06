@@ -20,16 +20,16 @@
         {
             "type":"function",
             "name":"##mainRouteFunctionName##",
-            "decorator":{
+            "decorators":[{
                 "name": "app.route",
                 "args": [
-                    "##mainRoute##"
+                    "'##mainRoute##'"
                 ]
-            },
+            }],
             "code":[
                 {
                     "type":"return",
-                    "expression": ["##mainRouteMessage##"]
+                    "expressions": ["'##mainRouteMessage##'"]
                 }
             ]
         },

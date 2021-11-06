@@ -6,7 +6,7 @@ import { DecoratorCallModel } from './decoratorCallModel'
 
 export interface FunctionModel{
     type: BlockTypes.function,
-    decorator?: DecoratorCallModel,
+    decorators?: DecoratorCallModel[],
     name: string
     code: PythonCodeBlock[]
     args?: Argument[]

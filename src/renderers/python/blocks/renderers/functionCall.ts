@@ -6,7 +6,7 @@ export function functionCallBlockRenderer(block:FunctionCallModel, _:Blockhandle
     let result:CodeLine[] = []
     let argsFragment = ''
     if(block.args != undefined){
-        argsFragment = block.args.join(", ")
+        argsFragment = block.args.join(', ')
     }
     let declarationLine:CodeLine = {
         content: `${block.function}(${argsFragment})`,
