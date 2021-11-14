@@ -11,7 +11,7 @@ const loadBlockRegexRemove = /^:/
 const renderInputRegex = /##(.*?)##/g
 const renderInputRegexRemove = /##/g
 
-export default class Compiler{
+export default class FileCompiler{
     originalBlock:PythonBaseCodeBlock | undefined
     renderedBlock:PythonBaseCodeBlock | undefined
     originalArgs:any
@@ -195,7 +195,7 @@ function getRequiredInputsFromBlock(block: PythonBaseCodeBlock, args:any, baseRo
         } else {
             requirementName = path.basename(requirement.from).split('.')[0]
         }
-        const importBlock = new Compiler(importCodeBlock, args, baseRoute, `${blockRoute ? blockRoute+'.' : blockRoute}${requirementName}`)
+        const importBlock = new FileCompiler(importCodeBlock, args, baseRoute, `${blockRoute ? blockRoute+'.' : blockRoute}${requirementName}`)
         inputs[requirementName] = importBlock.renderedBlock//codeLinesCompile()
         inputs = Object.assign(inputs, importBlock.inputs)
     }

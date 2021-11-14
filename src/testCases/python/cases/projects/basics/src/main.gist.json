@@ -1,0 +1,25 @@
+{
+    "renderInputs":{
+        "functionName":{"type":"str", "default":"hello_world"},
+        "separator":{"type":"str", "default":" "}
+    },
+    "type":"function",
+    "name":"##functionName##",
+    "code":[
+        {
+            "type":"variable",
+            "name":"a",
+            "expression":"function_a()"
+        },
+        {
+            "type":"variable",
+            "name":"b",
+            "expression":"function_b()"
+        },
+        {
+            "type":"functionCall",
+            "function":"print",
+            "args":["f'{a}##separator##{b}'"]
+        }
+    ]
+}
