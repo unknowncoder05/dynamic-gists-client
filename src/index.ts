@@ -4,6 +4,13 @@ import nameMainData from '././testCases/python/cases/nameMain.json'
 import sumData from '././testCases/python/cases/sum.json'
 import flaskData from '././testCases/python/cases/flaskBasicApp.json'
 
-const compiler = new Compiler(flaskData, {
-}, './dist/testCases/python/cases/')
-console.log(compiler.compile())
+function main () {
+    const compiler = new Compiler(flaskData, {
+    }, './dist/testCases/python/cases/')
+    console.log(compiler.compile())
+}
+
+exports.Compiler = Compiler
+exports.TestData = {
+    helloWorldData, nameMainData, sumData, flaskData
+}
