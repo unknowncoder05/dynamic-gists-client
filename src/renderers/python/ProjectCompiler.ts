@@ -1,6 +1,8 @@
 import { Project } from './models/project'
-import { CodeLine } from './../../models/code'
+import FileCompiler from './FileCompiler'
+import { CompiledFile } from './models/file'
 
+import path from 'path'
 
 export default class ProjectCompiler{
     project:Project
@@ -11,11 +13,31 @@ export default class ProjectCompiler{
         this.projectPath = projectPath
     }
     
-    codeLinesCompile(): CodeLine[][] | undefined{
-        return 
+    codeLinesCompile(): CompiledFile[] | undefined {
+        let fileCodeLines = []
+        for(const file of this.project.files){
+            const filePath = path.join(this.projectPath, file.path)
+            const fileContent = require(filePath)
+            const fileCompiler = new FileCompiler(fileContent, file.args, filePath)
+            fileCodeLines.push(
+                fileCompiler.codeLinesCompile()
+            )
+        }
+        console.log(fileCodeLines)
+        return fileCodeLines
     }
 
-    compile(tab:string='    '): string{
-        return ''
+    compile(): CompiledFile[]{
+        let fileCodeLines = []
+        for(const file of this.project.files){
+            const filePath = path.join(this.projectPath, file.path)
+            const fileContent = require(filePath)
+            const fileCompiler = new FileCompiler(fileContent, file.args, filePath)
+            fileCodeLines.push(
+                fileCompiler.compile()
+            )
+        }
+        console.log(fileCodeLines)
+        return fileCodeLines
     }
 }

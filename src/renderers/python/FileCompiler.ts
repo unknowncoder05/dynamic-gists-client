@@ -3,6 +3,7 @@ import { ImportBlockRenderer } from './blocks/renderers/import'
 import { CodeLine } from './../../models/code'
 import { PythonBaseCodeBlock } from './models/codeBlock'
 import { Import } from './models/import'
+import { CompiledFile } from './models/file'
 import { BlockTypes } from './blocks/enums/BlockTypes'
 import path from 'path'
 
@@ -11,6 +12,13 @@ const loadBlockRegexRemove = /^:/
 const renderInputRegex = /##(.*?)##/g
 const renderInputRegexRemove = /##/g
 
+interface FileCompilerCompileArguments {
+    tab?:string
+    lines?:CodeLine[]
+}
+
+const defaultTab = '    '
+
 export default class FileCompiler{
     originalBlock:PythonBaseCodeBlock | undefined
     renderedBlock:PythonBaseCodeBlock | undefined
@@ -18,6 +26,7 @@ export default class FileCompiler{
     inputs:any
     imports:Import[]
     baseRoute:string
+    fileCompiledPath: string
 
     constructor(block:PythonBaseCodeBlock, args:any, baseRoute:string, blockRoute:string='base'){
         this.originalBlock = block
@@ -27,10 +36,12 @@ export default class FileCompiler{
         this.renderedBlock = inputRenderingResult.result
         this.inputs = inputRenderingResult.inputs
         let imports = getImports(this.renderedBlock)
-        this.imports = imports ? imports : [] 
+        this.imports = imports ? imports : []
+
+        this.fileCompiledPath = this.baseRoute.replace(/\.gist\.json/, '.py')
     }
     
-    codeLinesCompile(): CodeLine[] | undefined{
+    codeLinesCompile(): CompiledFile {
         let codeLines:CodeLine[] = []
         let importCodeLines = ImportBlockRenderer(this.imports)
         if(importCodeLines)
@@ -38,23 +49,35 @@ export default class FileCompiler{
         let mainCodeLines = blockHandler(this.renderedBlock)
         if(mainCodeLines)
             codeLines = [ ...codeLines, ...mainCodeLines]
-        return codeLines
+        return {
+            filePath: this.fileCompiledPath,
+            codeLines
+        }
     }
 
-    compile(tab:string='    '): string{
-        let codeLines = this.codeLinesCompile()
-        let resultLines = []
-        if(!codeLines) return ''
+    compile(args:FileCompilerCompileArguments={}): CompiledFile{
+        let compiledFile:CompiledFile | undefined = undefined;
+        if(!args.lines){
+            compiledFile = this.codeLinesCompile()
+        }
+        let codeLines = args.lines ? args.lines : compiledFile?.codeLines
+        if(!codeLines) return {
+            filePath: this.fileCompiledPath
+        }
         
+        let resultLines = []
         for(const line of codeLines){
             let indentationString = ''
             if (line.indent != undefined && line.indent > 0){
-                indentationString = Array(line.indent+1).join(tab)
+                indentationString = Array(line.indent+1).join(args.tab ? args.tab : defaultTab)
             }
             resultLines.push(`${indentationString}${line.content}`)
         }
-        let result = resultLines.join('\n')
-        return result
+        let content = resultLines.join('\n')
+        return {
+            filePath: this.fileCompiledPath,
+            content
+        }
     }
 }
 
@@ -186,8 +209,7 @@ function getRequiredInputsFromBlock(block: PythonBaseCodeBlock, args:any, baseRo
     }
     let inputs:{[key:string]:any} = {}
     for(const requirement of block.requires){
-        const importPathDir = path.join(process.cwd(), baseRoute)
-        const importPathFile = path.join(importPathDir, requirement.from)
+        const importPathFile = path.join(baseRoute, requirement.from)
         const importCodeBlock:PythonBaseCodeBlock = require(importPathFile)
         let requirementName = ''
         if(requirement.as){
@@ -196,7 +218,7 @@ function getRequiredInputsFromBlock(block: PythonBaseCodeBlock, args:any, baseRo
             requirementName = path.basename(requirement.from).split('.')[0]
         }
         const importBlock = new FileCompiler(importCodeBlock, args, baseRoute, `${blockRoute ? blockRoute+'.' : blockRoute}${requirementName}`)
-        inputs[requirementName] = importBlock.renderedBlock//codeLinesCompile()
+        inputs[requirementName] = importBlock.renderedBlock
         inputs = Object.assign(inputs, importBlock.inputs)
     }
     return {
