@@ -19,29 +19,58 @@ interface FileCompilerCompileArguments {
 
 const defaultTab = '    '
 
+interface FileCompilerInterface{
+    block:PythonBaseCodeBlock,
+    args:any,
+    baseRoute:string,
+    blockRoute?:string,
+    readJsonFromFile?:Function
+}
+
 export default class FileCompiler{
     originalBlock:PythonBaseCodeBlock | undefined
     renderedBlock:PythonBaseCodeBlock | undefined
     originalArgs:any
     inputs:any
     imports:Import[]
-    baseRoute:string
-    fileCompiledPath: string
+    baseRoute?:string
+    fileCompiledPath:string
+    blockRoute:string
+    readJsonFromFile:Function
+    args:any
 
-    constructor(block:PythonBaseCodeBlock, args:any, baseRoute:string, blockRoute:string='base'){
-        this.originalBlock = block
-        this.originalArgs = args
-        this.baseRoute = baseRoute
-        let inputRenderingResult = renderBlockInputs(block, args, baseRoute, blockRoute)
+    constructor(args:FileCompilerInterface){
+        this.originalBlock = args.block
+        this.originalArgs = args.args
+        this.baseRoute = args.baseRoute
+        if(!args.readJsonFromFile){
+            this.readJsonFromFile = require
+        } else {
+            this.readJsonFromFile = args.readJsonFromFile
+        }
+        this.args = args.args
+        this.imports = []
+        this.blockRoute = args.blockRoute ? args.blockRoute : 'base'
+        this.fileCompiledPath = this.baseRoute.replace(/\.gist\.json/, '.py')
+    }
+    async renderInputs(){
+        if(!this.originalBlock) return;
+        if(!this.baseRoute) return;
+        let inputRenderingResult = await renderBlockInputs(
+            this.originalBlock,
+            this.args,
+            this.baseRoute,
+            this.blockRoute,
+            this.readJsonFromFile
+        )
         this.renderedBlock = inputRenderingResult.result
         this.inputs = inputRenderingResult.inputs
         let imports = getImports(this.renderedBlock)
         this.imports = imports ? imports : []
-
-        this.fileCompiledPath = this.baseRoute.replace(/\.gist\.json/, '.py')
     }
     
-    codeLinesCompile(): CompiledFile {
+    async codeLinesCompile(): Promise<CompiledFile> {
+        await this.renderInputs()
         let codeLines:CodeLine[] = []
         let importCodeLines = ImportBlockRenderer(this.imports)
         if(importCodeLines)
@@ -55,10 +84,10 @@ export default class FileCompiler{
         }
     }
 
-    compile(args:FileCompilerCompileArguments={}): CompiledFile{
+    async compile(args:FileCompilerCompileArguments={}): Promise<CompiledFile>{
         let compiledFile:CompiledFile | undefined = undefined;
         if(!args.lines){
-            compiledFile = this.codeLinesCompile()
+            compiledFile = await this.codeLinesCompile()
         }
         let codeLines = args.lines ? args.lines : compiledFile?.codeLines
         if(!codeLines) return {
@@ -112,8 +141,8 @@ function blockHandler(block:PythonBaseCodeBlock | undefined, indent:number=0): C
     }
 }
 
-function renderBlockInputs(block: PythonBaseCodeBlock, args:any, baseRoute:string, blockRoute:string): {result:PythonBaseCodeBlock | undefined, inputs:any}{
-    let loadedRequiredBlocks = getRequiredInputsFromBlock(block, args, baseRoute, blockRoute)
+async function renderBlockInputs(block: PythonBaseCodeBlock, args:any, baseRoute:string, blockRoute:string, readJsonFromFile:Function): Promise<{result:PythonBaseCodeBlock | undefined, inputs:any}>{
+    let loadedRequiredBlocks = await getRequiredInputsFromBlock(block, args, baseRoute, blockRoute, readJsonFromFile)
     let renderedBlock = block
     let inputs = getInputsFromBlock(renderedBlock, args, blockRoute)
     inputs = Object.assign(inputs, loadedRequiredBlocks.inputs)
@@ -203,21 +232,27 @@ function getInputsFromBlock(block: PythonBaseCodeBlock, args:any, blockRoute:str
     return inputs
 }
 
-function getRequiredInputsFromBlock(block: PythonBaseCodeBlock, args:any, baseRoute:string, blockRoute:string): any{
+async function getRequiredInputsFromBlock(block: PythonBaseCodeBlock, args:any, baseRoute:string, blockRoute:string, readJsonFromFile:Function): Promise<any>{
     if(!block.requires) return {
         inputs:[]
     }
     let inputs:{[key:string]:any} = {}
     for(const requirement of block.requires){
         const importPathFile = path.join(baseRoute, requirement.from)
-        const importCodeBlock:PythonBaseCodeBlock = require(importPathFile)
+        const importCodeBlock:PythonBaseCodeBlock = await readJsonFromFile(importPathFile)
         let requirementName = ''
         if(requirement.as){
             requirementName = requirement.as
         } else {
             requirementName = path.basename(requirement.from).split('.')[0]
         }
-        const importBlock = new FileCompiler(importCodeBlock, args, baseRoute, `${blockRoute ? blockRoute+'.' : blockRoute}${requirementName}`)
+        const importBlock = new FileCompiler({
+            block: importCodeBlock,
+            args,
+            baseRoute,
+            blockRoute: `${blockRoute ? blockRoute+'.' : blockRoute}${requirementName}`,
+            readJsonFromFile
+        })
         inputs[requirementName] = importBlock.renderedBlock
         inputs = Object.assign(inputs, importBlock.inputs)
     }
