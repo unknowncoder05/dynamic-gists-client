@@ -28,7 +28,7 @@ export default class ProjectCompiler{
         let fileCodeLines = []
         for(const file of this.project.files){
             const filePath = path.join(this.projectPath, file.path)
-            const fileContent = this.readJsonFromFile(filePath)
+            const fileContent = await this.readJsonFromFile(filePath)
             const fileCompiler = new FileCompiler({
                 block: fileContent,
                 args: file.args,
@@ -45,7 +45,7 @@ export default class ProjectCompiler{
         let fileCodeLines = []
         for(const file of this.project.files){
             const filePath = path.join(this.projectPath, file.path)
-            const fileContent = this.readJsonFromFile(filePath)
+            const fileContent = await this.readJsonFromFile(filePath)
             const fileCompiler = new FileCompiler({
                 block: fileContent,
                 args: file.args,

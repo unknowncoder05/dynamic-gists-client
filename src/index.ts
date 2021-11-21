@@ -20,10 +20,16 @@ async function main () {
     console.log(lines)
     console.log(lines[0].codeLines)
 }
-main()
+// main()
 
-exports.FileCompiler = FileCompiler
-exports.ProjectCompiler = ProjectCompiler
+export const PythonCompiler = {
+    FileCompiler,
+    ProjectCompiler,
+    TestData:{
+        helloWorldData, nameMainData, sumData, flaskData
+    }
+}
+/*exports.ProjectCompiler = ProjectCompiler
 exports.TestData = {
     helloWorldData, nameMainData, sumData, flaskData
-}
+}*/

@@ -4,7 +4,9 @@
         {
             "path":"./src/main.gist.json",
             "args":{
-                "separator":"-"
+                "separator":"-",
+                "aFunctionName":"function_a",
+                "bFunctionName":"function_b"
             }
         },
         {
