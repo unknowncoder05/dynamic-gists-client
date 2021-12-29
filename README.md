@@ -1,10 +1,18 @@
+### building the module
+```sh
+npm i
+npm run build
+```
+
 ### Creating link
 
 ```sh
-npm link
+sudo npm link
 ```
 
-### Locally installing in an other project
+
+### Locally install in another project
+
 ```sh
 npm link dynamic-gists-client
 ```
