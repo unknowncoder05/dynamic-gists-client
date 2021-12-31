@@ -10,15 +10,29 @@ export function getAuthHeaders(token:string){
     }
 }
 
-export async function auth(email:string, password:string): Promise<AuthenticationTokens>{
+export async function auth(email:string, password:string, baseApiUri?:string): Promise<{data:AuthenticationTokens | any, status:number}>{
     const credentials = {
         email, password
     }
-    return await fetchJson(`${config.apiBaseUrl}${config.apiVersionPath}/auth/token/`, {
+    let currentApiUri = baseApiUri
+    if(!currentApiUri){
+        currentApiUri = config.apiBaseUrl
+    }
+    currentApiUri += `${config.apiVersionPath}/auth/token/`
+    return await fetchJson(currentApiUri, {
         headers: {
             'Content-Type': 'application/json',
         },
         method: 'post',
         body: JSON.stringify(credentials)
+    })
+}
+
+export async function test(){
+    return await fetchJson(`https://jsonplaceholder.typicode.com/todos/1`, {
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        method: 'get',
     })
 }

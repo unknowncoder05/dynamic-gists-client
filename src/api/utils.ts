@@ -2,5 +2,8 @@ import fetch from 'node-fetch';
 
 export async function fetchJson(url:string, options:any){
     const response = await fetch(url, options)
-    return await response.json()
+    return {
+        data: await response.json(),
+        status: response.status
+    }
 }
